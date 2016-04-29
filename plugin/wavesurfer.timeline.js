@@ -20,6 +20,7 @@ WaveSurfer.Timeline = {
 
         this.width = drawer.width;
         this.height = this.params.height || 20;
+        this.works = this.params.works || [];
         this.notchPercentHeight = this.params.notchPercentHeight || 90;
         this.primaryColor = this.params.primaryColor || '#000';
         this.secondaryColor = this.params.secondaryColor || '#c0c0c0';
@@ -88,6 +89,8 @@ WaveSurfer.Timeline = {
             document.createElement('canvas')
         );
 
+        this.canvas = canvas;
+
         this.timeCc = canvas.getContext('2d');
 
         this.wavesurfer.drawer.style(canvas, {
@@ -113,7 +116,8 @@ WaveSurfer.Timeline = {
         var backend = this.wavesurfer.backend,
         wsParams = this.wavesurfer.params,
         duration = backend.getDuration(),
-        self = this;
+        self = this,
+        works = this.works;
 
         if (wsParams.fillParent && !wsParams.scrollParent) {
             var width = this.drawer.getWidth();
@@ -121,6 +125,7 @@ WaveSurfer.Timeline = {
             width = this.drawer.wrapper.scrollWidth * wsParams.pixelRatio;
         }
         var pixelsPerSecond = width/duration;
+        this.pixelsPerSecond = pixelsPerSecond;
 
         if (duration <= 0) { return; }
 
@@ -168,6 +173,9 @@ WaveSurfer.Timeline = {
             height2 = (this.height * (this.notchPercentHeight / 100.0)) - 4,
             fontSize = this.fontSize * wsParams.pixelRatio;
 
+        var curSeconds2 = curSeconds;
+        var curPixel2 = curPixel;
+
         for (var i = 0; i < totalSeconds/timeInterval; i++) {
             if (i % primaryLabelInterval == 0) {
                 this.timeCc.fillStyle = this.primaryColor;
@@ -188,6 +196,21 @@ WaveSurfer.Timeline = {
 
             curSeconds += timeInterval;
             curPixel += pixelsPerSecond * timeInterval;
+        }
+
+        for (var j = 0; j < totalSeconds * pixelsPerSecond; j++) {
+          var nomark = true;
+          for (var i = 0; i < works.length; i++) {
+            if(Math.round(works[i].start * pixelsPerSecond) == Math.round(curPixel2)){
+              var workDuration = works[i].end - works[i].start;
+              this.timeCc.fillStyle = 'rgba(39, 174, 96,0.5)';
+              this.timeCc.fillRect(curPixel2, 0, workDuration * pixelsPerSecond, height1);
+              curPixel2 += workDuration * pixelsPerSecond;
+              nomark = false;
+            }
+          }
+          if(nomark) curPixel2 += pixelsPerSecond;
+          curSeconds2 += 1;
         }
     },
 
